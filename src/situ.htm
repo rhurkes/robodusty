@@ -56,6 +56,7 @@
 		display: none;
 	}
 	canvas { display: none; }
+	#tracksLabel { margin: 5px; }
 	li.track {
 		list-style: none;
 		background: #126180;
@@ -108,7 +109,7 @@
 	
 	/* IEM stuff */
 	#displayIem {
-		overflow-y: scroll;
+		overflow-y: hidden;
 	}
 	#displayIem > ol {
 		list-style: none;
@@ -123,12 +124,12 @@
 		overflow: hidden;
 	}
 	
-	#displayIem span.iemMessage {
-		margin-right: 10px;
+	#displayIem li.even {
+		background: #D3D3D3;
 	}
 	
-	#displayIem .RER, #displayIem .WSW, #displayIem .MWW , #displayIem .PNS, #displayIem .HWO, #displayIem .LSR, #displayIem .NPW, #displayIem .FLS {
-		display: none;
+	#displayIem span.iemMessage {
+		margin-right: 10px;
 	}
 </style>
 </head>
@@ -140,6 +141,7 @@
 		<div id="config" class="button">Config</div>
 		<div id="addTrack" class="button">Add Track</div>
 	</div>
+	<span id="tracksLabel">Tracks</span>
 	<div id="tracks">
 		<ul></ul>
 	</div>
@@ -248,7 +250,7 @@ function initSatTrack(track) {
 	var maxHeight = $('#display').height() - 20;
 	$('#display').append(
 		$('<div/>', { 'class': 'track' })
-			.data('trackId', 'IEM'.hashCode())
+			.data('trackId', track.url.hashCode())
 			.css('max-width', maxWidth)
 			.css('max-height', maxHeight)
 	);
@@ -325,9 +327,9 @@ var Track = function()
 		$('#tracks ul').append(
 			$('<li/>', { 'class': 'track' })
 				.data('trackId', url.hashCode())
-				.append($('<div/>', { 'class': 'status', 'text': '*' }))
+				//.append($('<div/>', { 'class': 'status', 'text': '*' }))
 				.append($('<div/>', { 'class': 'label', 'text': name }))
-				.append($('<div/>', { 'class': 'close', 'text': 'X' }))
+				//.append($('<div/>', { 'class': 'close', 'text': 'X' }))
 				.click(function() {
 					var trackId = $(this).data('trackId');
 					$('#display .track').hide();
@@ -371,7 +373,10 @@ resizeDisplay();
 
 // IEM STUFF
 var lastSeqNum = 0;
-
+var lastEven = false;
+var _isFilteredType = function(code) {
+	return (code == 'RER' || code == 'WSW' || code == 'MWW' || code == 'PNS' || code == 'HWO' || code == 'NPW' || code == 'FLS' || code == 'CFW');
+};
 function getIemMessages(track) {
 	var url = 'http://mesonet.agron.iastate.edu/iembot-json/room/botstalk?seqnum=' + lastSeqNum + '&callback=?';
 	$.getJSON(url, null, function(data) {
@@ -397,6 +402,8 @@ function getIemMessages(track) {
 					tmpCode = tmpProductData[3].substring(0, 3);
 				}
 				
+				if (_isFilteredType(tmpCode)) { return; }
+				
 				if (tmpProductData[1] === 'KWNS') {
 					if (lastSpcMessage === tmpMessage.product_id) return true;
 					lastSpcMessage = tmpMessage.product_id;
@@ -404,11 +411,14 @@ function getIemMessages(track) {
 				}
 			}
 
-			//$('<span/>', {   })
+			var li = $('<li/>', { 'class': tmpCode }).addClass('shadow');
+			if (lastEven) {
+				li.addClass('even');
+			}
+			lastEven = !lastEven;
 			
 			$('#displayIem > ol').prepend(
-				$('<li/>', { 'class': tmpCode }).addClass('shadow')
-					.append($('<span/>', { 'class': 'iemMessage', 'text': moment(tmpMessage.ts).format('MM/DD HH:mm') + 'Z' }))
+					li.append($('<span/>', { 'class': 'iemMessage', 'text': moment(tmpMessage.ts).format('MM/DD HH:mm') + 'Z' }))
 					.append($('<span/>', { 'class': 'iemMessage', 'html': tmpMessage.message }))
 			);
 		});
