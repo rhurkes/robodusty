@@ -1,137 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-<script src="jquery-2.1.0.min.js"></script>
-<script src="moment.min.js"></script>
-<script src="tinymenu-1.0.min.js"></script>
-<script src="utils.js"></script>
-<script src="speakGenerator.js"></script>
-<script src="speakClient.js"></script>
-<link rel="stylesheet" type="text/css" href="jquery-ui.min.css">
-<link href='http://fonts.googleapis.com/css?family=Rationale' rel='stylesheet' type='text/css'>
-<link href='http://fonts.googleapis.com/css?family=Varela+Round' rel='stylesheet' type='text/css'>
-<style>
-	html, body {
-		height: 100%;
-		margin: 0;
-		padding: 0;
-		-webkit-touch-callout: none;
-		-webkit-user-select: none;
-		-khtml-user-select: none;
-		-moz-user-select: none;
-		-ms-user-select: none;
-		user-select: none;
-		font-family: 'Varela Round';
-	}
-	.shadow {
-		-moz-box-shadow: 1px 1px 2px 0 #d0d0d0;
-		-webkit-box-shadow: 1px 1px 2px 0 #d0d0d0;
-		box-shadow: 1px 1px 2px 0 #d0d0d0;
-	}
-	ul { 
-		margin: 0;
-		padding: 0;
-	}
-	#controls {
-		width: 200px;
-		height: 100%;
-		background: #FFF;
-		float: left;
-	}
-	#status {
-		height: 200px;
-		background: #FFF;
-	}
-	#display {
-		float: left;
-		height: 100%;
-		background: #FFF;
-	}
-	.track {
-		padding: 10px;
-	}
-	#trackMenu {
-		background: red;
-		height: 100%;
-		display: none;
-	}
-	canvas { display: none; }
-	#tracksLabel { margin: 5px; }
-	li.track {
-		list-style: none;
-		background: #126180;
-		height: 35px;
-		line-height: 35px;
-		margin: 5px;
-		cursor: pointer;
-		color: #FFF;
-	}
-	.button {
-		background: green;
-		height: 35px;
-		line-height: 35px;
-		margin: 5px;
-		text-align: center;
-		text-transform: uppercase;
-		cursor: pointer;
-		color: #FFF;
-	}
-	#clock {
-		height: 35px;
-		line-height: 35px;
-		margin: 5px;
-		text-align: center;
-		font-family: 'Rationale';
-		font-size: 2em;
-	}
-	li .status {
-		width: 10px;
-		float: left;
-		letter-spacing: 20px;
-	}
-	li .label {
-		margin-left: 10px;
-	}
-	li .name {
-		margin-left: 40px;
-	}
-	.tm-btn {
-		width: 100px;
-		height: 30px;
-		background: green;
-		margin: 5px;
-		display: none;
-		cursor: pointer;
-	}
-	#tm-back {
-		background: orange;
-	}
-	
-	/* IEM stuff */
-	#displayIem {
-		overflow-y: hidden;
-	}
-	#displayIem > ol {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-	#displayIem li {
-		height: 35px;
-		margin-bottom: 5px;
-		line-height: 35px;
-		font-size: 11px;
-		overflow: hidden;
-	}
-	
-	#displayIem li.even {
-		background: #D3D3D3;
-	}
-	
-	#displayIem span.iemMessage {
-		margin-right: 10px;
-	}
-</style>
+	<script src="jquery-2.1.0.min.js"></script>
+	<script src="moment.min.js"></script>
+	<script src="tinymenu-1.0.min.js"></script>
+	<script src="utils.js"></script>
+	<script src="speakGenerator.js"></script>
+	<script src="speakClient.js"></script>
+	<script src="trackconfig.js"></script>
+	<link rel="stylesheet" type="text/css" href="jquery-ui.min.css">
+	<link rel="stylesheet" type="text/css" href="robodusty.css">
+	<link href='http://fonts.googleapis.com/css?family=Rationale' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Varela+Round' rel='stylesheet' type='text/css'>
 </head>
 <body>
 <canvas id="canvas"></canvas>
@@ -141,7 +21,7 @@
 		<div id="config" class="button">Config</div>
 		<div id="addTrack" class="button">Add Track</div>
 	</div>
-	<span id="tracksLabel">Tracks</span>
+	<div id="tracksLabel">Tracks</div>
 	<div id="tracks">
 		<ul></ul>
 	</div>
@@ -152,37 +32,8 @@
 <script>
 // TODO don't pollute global namespace
 // TODO add title alert?
-	var trackconfig = 
-	{
-		'menu': [
-			{ id: 'IEM', info: { type: 'iem', name: 'IEM Messages' } },
-			{
-				id: 'CoD Satellite',
-				children: [
-					{	
-						id: 'Region',
-						children: [
-							{ id: 'Northwest', info: { type: 'codsat', 'Name': 'CoD Vis Sat Northwest', 'Url': 'http://climate.cod.edu/data/satellite/regional/northwest/current/northwest.vis.gif'} },
-							{ id: 'Southwest', info: { type: 'codsat', 'Name': 'CoD Vis Sat Southwest', 'Url': 'http://climate.cod.edu/data/satellite/regional/southwest/current/southwest.vis.gif'} },
-							{ id: 'North Central', info: { type: 'codsat', 'Name': 'CoD Vis Sat North Central', 'Url': 'http://climate.cod.edu/data/satellite/regional/northcentral/current/northcentral.vis.gif'} },
-							{ id: 'South Central', info: { type: 'codsat', 'Name': 'CoD Vis Sat South Central', 'Url': 'http://climate.cod.edu/data/satellite/regional/southcentral/current/southcentral.vis.gif'} },
-							{ id: 'Northeast', info: { type: 'codsat', 'Name': 'CoD Vis Sat Northeast', 'Url': 'http://climate.cod.edu/data/satellite/regional/northeast/current/northeast.vis.gif'} },
-							{ id: 'Southeast', info: { type: 'codsat', 'Name': 'CoD Vis Sat Southeast', 'Url': 'http://climate.cod.edu/data/satellite/regional/southeast/current/southeast.vis.gif'} },
-						]
-					},
-					{
-						id: '2km',
-						children: []
-					},
-					{
-						id: '1km',
-						children: []
-					}
-				]
-			}
-		]
-	};
-
+// TODO sometimes a flood of LSR reports with "reports FLOOD" or "reports HEAVY RAIN"
+// reports TSTM WND GST, reports TORNADO, reports WATER SPOUT, reports MARINE TSTM WIND, reports DEBRIS FLOW
 var trackcallback = function(data) {
 	$('#menu').empty().hide();
 	
@@ -375,7 +226,7 @@ resizeDisplay();
 var lastSeqNum = 0;
 var lastEven = false;
 var _isFilteredType = function(code) {
-	return (code == 'RER' || code == 'WSW' || code == 'MWW' || code == 'PNS' || code == 'HWO' || code == 'NPW' || code == 'FLS' || code == 'CFW');
+	return (code == 'RER' || code == 'WSW' || code == 'MWW' || code == 'PNS' || code == 'HWO' || code == 'NPW' || code == 'FLS' || code == 'CFW' || code == 'SMW' || code == 'MWS' || code == 'FFA' || code == 'ADM');
 };
 function getIemMessages(track) {
 	var url = 'http://mesonet.agron.iastate.edu/iembot-json/room/botstalk?seqnum=' + lastSeqNum + '&callback=?';
@@ -387,28 +238,9 @@ function getIemMessages(track) {
 			var tmpMessage = $(this)[0];
 			if (tmpMessage.product_id.length > 0) {
 				var tmpProductData = tmpMessage.product_id.split('-');
-				var tmpList = $('#messages li:eq(0)');
-				if (tmpProductData.length > 0)
-					tmpList.data('timestamp', tmpProductData[0]);
-				if (tmpProductData.length > 1)
-					tmpList.data('wmo', tmpProductData[1]);
-				if (tmpProductData.length > 2)
-					tmpList.data('wmoheader', tmpProductData[2]);
-				if (tmpProductData.length > 3)
-					tmpList.data('afospil', tmpProductData[3]);
-				tmpList.data('product_id', tmpMessage.product_id);
-				
-				if (tmpProductData[3] !== null && tmpProductData[3].length > 0) {
-					tmpCode = tmpProductData[3].substring(0, 3);
-				}
-				
+				if (tmpProductData[3] !== null && tmpProductData[3].length >= 3) { tmpCode = tmpProductData[3].substring(0, 3); }
+				if (tmpProductData[1] === 'KWNS') { tmpCode += '|SPC'; }
 				if (_isFilteredType(tmpCode)) { return; }
-				
-				if (tmpProductData[1] === 'KWNS') {
-					if (lastSpcMessage === tmpMessage.product_id) return true;
-					lastSpcMessage = tmpMessage.product_id;
-					tmpCode += 'SPC';
-				}
 			}
 
 			var li = $('<li/>', { 'class': tmpCode }).addClass('shadow');
