@@ -8,7 +8,7 @@
 	<script src="speakGenerator.js"></script>
 	<script src="speakClient.js"></script>
 	<script src="trackconfig.js"></script>
-	<link rel="stylesheet" type="text/css" href="jquery-ui.min.css">
+	<!--<link rel="stylesheet" type="text/css" href="jquery-ui.min.css">-->
 	<link rel="stylesheet" type="text/css" href="robodusty.css">
 	<link href='http://fonts.googleapis.com/css?family=Rationale' rel='stylesheet' type='text/css'>
 	<link href='http://fonts.googleapis.com/css?family=Varela+Round' rel='stylesheet' type='text/css'>
@@ -18,7 +18,7 @@
 <div id="controls">
 	<div id="status">
 		<div id="clock"></div>
-		<div id="config" class="button">Config</div>
+		<!--<div id="config" class="button">Config</div>-->
 		<div id="addTrack" class="button">Add Track</div>
 	</div>
 	<div id="tracksLabel">Tracks</div>
@@ -33,16 +33,20 @@
 // TODO don't pollute global namespace
 // TODO add title alert?
 // TODO sometimes a flood of LSR reports with "reports FLOOD" or "reports HEAVY RAIN"
-// reports TSTM WND GST, reports TORNADO, reports WATER SPOUT, reports MARINE TSTM WIND, reports DEBRIS FLOW
+// reports TSTM WND GST, reports TORNADO, reports WATER SPOUT, reports MARINE TSTM WIND, reports DEBRIS FLOW, reports NON-TSTM WND GST
+// issues Summary Local Storm Report
+var tracks = [];
+
+
 var trackcallback = function(data) {
 	$('#menu').empty().hide();
 	
 	if (data.info.type == 'codsat') {
-		var track = new Track(data.info.Name, data.info.Url, data.info.type, 3);
+		var track = new Track(data.info.Name, data.info.url, data.info.type, 3);
 	}
 	
 	if (data.info.type == 'iem') {
-		var track = new Track(data.info.name, '', data.info.type, 3);
+		var track = new Track(data.info.name, data.info.url, data.info.type, 3);
 	}
 };
 	
@@ -50,7 +54,18 @@ var trackcallback = function(data) {
 setInterval(function() { _setClock() }, 1000 );
 _setClock();
 function _setClock() {
-	$('#clock').text(moment.utc(new Date()).utc().format('MM/DD HH:mm') + 'Z');
+	$('#clock').text(moment.utc(new Date()).utc().format('HH:mm') + 'Z');
+	var now = new Date();
+	$.each(tracks, function() {
+		var updated = formatLastSuccess(now);
+		var trackId = this.id;
+		$('#tracks li').each(function() {
+			if ($(this).data('trackId') == trackId) {
+				$(this).find('.updated').text('last update: ' + updated);
+				return false;
+			}
+		});
+	});
 }
 
 // New blinkers
@@ -79,8 +94,6 @@ $('#addTrack').click(function() {
 
 // Config menu
 $('#config').click(function() { });
-
-var tracks = [];
 
 // TODO prevent dupe tracks
 function initIemTrack(track) {
@@ -173,15 +186,20 @@ var Track = function()
 		this.id = url.hashCode();
 		this.lastHash = null;
 		this.UpdateMinutes = updateMinutes;
+		this.lastSuccess = null;
 		
 		// Add track to control list
+		$('#tracks li').removeClass('selected');
 		$('#tracks ul').append(
-			$('<li/>', { 'class': 'track' })
-				.data('trackId', url.hashCode())
-				//.append($('<div/>', { 'class': 'status', 'text': '*' }))
-				.append($('<div/>', { 'class': 'label', 'text': name }))
-				//.append($('<div/>', { 'class': 'close', 'text': 'X' }))
+			$('<li/>', { 'class': 'track selected' })
+				.data('trackId', url.hashCode()).append(
+					$('<div/>', { 'class': 'label', 'text': name }),
+					$('<div/>', { 'class': 'updated', 'text': 'last update:' }),
+					$('<div/>', { 'class': 'arrow' })
+				)
 				.click(function() {
+					$('#tracks li').removeClass('selected');
+					$(this).addClass('selected');
 					var trackId = $(this).data('trackId');
 					$('#display .track').hide();
 					$('#display .track').each(function() {
@@ -213,6 +231,13 @@ var Track = function()
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
 
+function formatLastSuccess(ts) {
+	var diff = new Date() - ts;
+	if (diff < 60000) { return '< 1min'; }
+	if (diff >= 60000 && diff < 300000) { return '< 5min'; }
+	if (diff >= 300000) { return '> 5min'; }
+}
+
 function resizeDisplay() {
 	var displayWidth = $(window).width() - $('#controls').width();
 	$('#display').width(displayWidth);
@@ -226,13 +251,22 @@ resizeDisplay();
 var lastSeqNum = 0;
 var lastEven = false;
 var _isFilteredType = function(code) {
-	return (code == 'RER' || code == 'WSW' || code == 'MWW' || code == 'PNS' || code == 'HWO' || code == 'NPW' || code == 'FLS' || code == 'CFW' || code == 'SMW' || code == 'MWS' || code == 'FFA' || code == 'ADM');
+	return (code == 'RER' || code == 'WSW' || code == 'MWW' || code == 'PNS' || code == 'HWO' || code == 'NPW' || code == 'FLS' || code == 'CFW' || code == 'SMW' || code == 'MWS' || code == 'FFA'
+	|| code == 'ADM' || code == 'FLW' || code == 'RFD' || code == 'RFW');
 };
+var _isFilteredLsr = function(msg) {
+	return (msg.indexOf('reports TSTM WND') > -1 || msg.indexOf('reports HEAVY RAIN') > -1 || msg.indexOf('reports SLEET') > -1 || msg.indexOf('reports MARINE') > -1);
+}
+var _isAllowedWfo = function(msg) {
+	var wfo = msg.replace('K', '');
+	return (wfo == 'BOU' || wfo == 'GJT' || wfo == 'PUB' || wfo == 'LOT' || wfo == 'ILX' || wfo == 'DVN' || wfo == 'DMX' || wfo == 'DDC' || wfo == 'GLD' || wfo == 'TOP' || wfo == 'ICT'
+		|| wfo == 'MPX' || wfo == 'EAX' || wfo == 'SGF' || wfo == 'LSX' || wfo == 'GID' || wfo == 'LBF' || wfo == 'OAX' || wfo == 'ABR' || wfo == 'UNR' || wfo == 'FSD' || wfo == 'CYS' 
+		|| wfo == 'OUN' || wfo == 'TSA' || wfo == 'AMA' || wfo == 'FWD' || wfo == 'LUB' || wfo == 'MAF');
+}
 function getIemMessages(track) {
 	var url = 'http://mesonet.agron.iastate.edu/iembot-json/room/botstalk?seqnum=' + lastSeqNum + '&callback=?';
 	$.getJSON(url, null, function(data) {
 		var tmpCode = '';
-		var lastSpcMessage = '';
 		
 		$.each(data.messages, function() {
 			var tmpMessage = $(this)[0];
@@ -241,16 +275,17 @@ function getIemMessages(track) {
 				if (tmpProductData[3] !== null && tmpProductData[3].length >= 3) { tmpCode = tmpProductData[3].substring(0, 3); }
 				if (tmpProductData[1] === 'KWNS') { tmpCode += '|SPC'; }
 				if (_isFilteredType(tmpCode)) { return; }
+				//if (_isFilteredLsr(tmpMessage.message)) { return; }
+				//if ((tmpCode == 'AFD' || tmpCode == 'NOW' || tmpCode == 'LSR') && !_isAllowedWfo(tmpProductData[1])) { return; }
+				if ((tmpCode == 'WCN' || tmpCode == 'SVS') && (tmpMessage.message.indexOf('cancels') > -1 || tmpMessage.message.indexOf('continues'))) { return; }
 			}
 
 			var li = $('<li/>', { 'class': tmpCode }).addClass('shadow');
-			if (lastEven) {
-				li.addClass('even');
-			}
+			if (lastEven) { li.addClass('even'); }
 			lastEven = !lastEven;
 			
 			$('#displayIem > ol').prepend(
-					li.append($('<span/>', { 'class': 'iemMessage', 'text': moment(tmpMessage.ts).format('MM/DD HH:mm') + 'Z' }))
+					li.append($('<span/>', { 'class': 'iemTimestamp', 'text': moment(tmpMessage.ts).format('MM/DD HH:mm') + 'Z' }))
 					.append($('<span/>', { 'class': 'iemMessage', 'html': tmpMessage.message }))
 			);
 		});
@@ -261,6 +296,9 @@ function getIemMessages(track) {
 				lastSeqNum = tmpLastSeqNum;
 			}
 		}
+		
+		track.lastSuccess = new Date();
+		console.log(track.lastSuccess);
 	});
 }
 </script>
