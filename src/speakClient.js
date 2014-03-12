@@ -6,7 +6,7 @@ try {
 }
 
 function speak(text, args) {
-  var PROFILE = 1;
+  var PROFILE = 0;
 
   function parseWav(wav) {
     function readInt(i, bytes) {
