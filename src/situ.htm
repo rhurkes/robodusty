@@ -15,6 +15,14 @@
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<!--TODO handle audio tags better-->
+<audio id="clink">
+	<source src="clink.mp3" type="audio/mpeg">
+</audio>
+<audio id="alert">
+	<source src="warningtone.mp3" type="audio/mpeg">
+</audio>
+<div id="audio"></div>
 <div id="controls">
 	<div id="status">
 		<div id="clock"></div>
@@ -67,6 +75,30 @@ function _setClock() {
 		});
 	});
 }
+
+function speakText(text, playEas) {
+	spAmp = 100;
+	spGap = 0;
+	spPitch = 30;
+	spSpeed =  140;
+	if (playEas) {
+		$('audio#alert')[0].play();
+		setTimeout(function() { speak(text, { amplitude: spAmp, wordgap: spGap, pitch: spPitch, speed: spSpeed }); }, 27000);
+	}
+	else {
+		speak(text, { amplitude: spAmp, wordgap: spGap, pitch: spPitch, speed: spSpeed });
+	}
+}
+
+var _alertEl = $('#alert')[0];
+var processAudioQueue = setInterval(function() {
+	if (!speakerQueue.length) { return; }
+	var _player = $('#player')[0];
+	if ((_player == null || _player.paused) && _alertEl.paused) {
+		var nextSpeak = speakerQueue.shift();
+		speakText(nextSpeak.text, nextSpeak.alert);
+	}
+}, 3000);
 
 // New blinkers
 // TODO get blinkers on updated image
@@ -140,7 +172,8 @@ function processImage(img, track) {
 			displayTrack.find('img').last().remove();
 		}
 		else {
-			console.log('new image found!');
+			$('#clink')[0].play();
+			setTimeout(function() {	speakText('Visible satellite image has updated.'); }, 1000);
 			$('li.track').each(function() {
 				if ($(this).data('trackId') == track.id) {
 					$(this).find('.status').data('status', 'new');
@@ -178,7 +211,6 @@ function updateSatTrack(track) {
 var Track = function()
 {
     var constructor = function Track(name, url, type, updateMinutes) {
-		console.log('creating new Track');
 		var track = this;
 		
 		this.Name = name;
@@ -230,6 +262,7 @@ var Track = function()
 
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
+var speakerQueue = [];
 
 function formatLastSuccess(ts) {
 	var diff = new Date() - ts;
@@ -252,7 +285,7 @@ var lastSeqNum = 0;
 var lastEven = false;
 var _isFilteredType = function(code) {
 	return (code == 'RER' || code == 'WSW' || code == 'MWW' || code == 'PNS' || code == 'HWO' || code == 'NPW' || code == 'FLS' || code == 'CFW' || code == 'SMW' || code == 'MWS' || code == 'FFA'
-	|| code == 'ADM' || code == 'FLW' || code == 'RFD' || code == 'RFW');
+	|| code == 'ADM' || code == 'FLW' || code == 'RFD' || code == 'RFW' || code == 'SPE');
 };
 var _isFilteredLsr = function(msg) {
 	return (msg.indexOf('reports TSTM WND') > -1 || msg.indexOf('reports HEAVY RAIN') > -1 || msg.indexOf('reports SLEET') > -1 || msg.indexOf('reports MARINE') > -1);
@@ -264,6 +297,15 @@ var _isAllowedWfo = function(msg) {
 		|| wfo == 'OUN' || wfo == 'TSA' || wfo == 'AMA' || wfo == 'FWD' || wfo == 'LUB' || wfo == 'MAF');
 }
 function getIemMessages(track) {
+	// Truncate older messages to keep things fast
+	if ($('#displayIem li').length > 100) {
+		var count = 0;
+		$('#displayIem li').each(function() {
+			count++;
+			if (count > 100) { $(this).remove(); }
+		});
+	}
+	
 	var url = 'http://mesonet.agron.iastate.edu/iembot-json/room/botstalk?seqnum=' + lastSeqNum + '&callback=?';
 	$.getJSON(url, null, function(data) {
 		var tmpCode = '';
@@ -274,10 +316,29 @@ function getIemMessages(track) {
 				var tmpProductData = tmpMessage.product_id.split('-');
 				if (tmpProductData[3] !== null && tmpProductData[3].length >= 3) { tmpCode = tmpProductData[3].substring(0, 3); }
 				if (tmpProductData[1] === 'KWNS') { tmpCode += '|SPC'; }
-				if (_isFilteredType(tmpCode)) { return; }
+				//if (_isFilteredType(tmpCode)) { return; }
 				//if (_isFilteredLsr(tmpMessage.message)) { return; }
 				//if ((tmpCode == 'AFD' || tmpCode == 'NOW' || tmpCode == 'LSR') && !_isAllowedWfo(tmpProductData[1])) { return; }
-				if ((tmpCode == 'WCN' || tmpCode == 'SVS') && (tmpMessage.message.indexOf('cancels') > -1 || tmpMessage.message.indexOf('continues'))) { return; }
+				//if ((tmpCode == 'WCN' || tmpCode == 'SVS') && (tmpMessage.message.indexOf('cancels') > -1 || tmpMessage.message.indexOf('continues'))) { return; }
+			}
+			
+			// Speaker Queue stuff testing
+			// Parse abbreviations
+			
+			if (tmpCode == 'LSR') {
+				var parsedText = tmpProductData[1] + $('<div/>').html(tmpMessage.message).find('a').text();
+				parsedText = parsedText.replaceAll('Co', 'county');
+				parsedText = parsedText.replaceAll('TSTM', 'thunder storm');
+				parsedText = parsedText.replaceAll('WND', 'wind');
+				parsedText = parsedText.replaceAll('DMG', 'damage');
+				parsedText = parsedText.replaceAll('GST', 'gust');
+				parsedText = parsedText.replaceAll('MPH', 'miles per hour');
+				parsedText = parsedText.replaceAll('KY', 'Kentucky');
+				speakerQueue.push( { 'text': 'There is a new local storm report. ' + parsedText, 'alert': false });
+			}
+			
+			if (tmpCode == 'TOR') {
+				speakerQueue.push( { 'text': 'The national weather service has issued a tornado warning. ' + parsedText, 'alert': true });
 			}
 
 			var li = $('<li/>', { 'class': tmpCode }).addClass('shadow');
@@ -298,7 +359,6 @@ function getIemMessages(track) {
 		}
 		
 		track.lastSuccess = new Date();
-		console.log(track.lastSuccess);
 	});
 }
 </script>
