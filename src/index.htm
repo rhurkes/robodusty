@@ -7,6 +7,7 @@
 	<script src="utils.js"></script>
 	<script src="speakGenerator.js"></script>
 	<script src="speakClient.js"></script>
+	<script src="carto.js"></script>
 	<script src="trackconfig.js"></script>
 	<!--<link rel="stylesheet" type="text/css" href="jquery-ui.min.css">-->
 	<link rel="stylesheet" type="text/css" href="robodusty.css">
@@ -43,9 +44,10 @@
 // TODO sometimes a flood of LSR reports with "reports FLOOD" or "reports HEAVY RAIN"
 // reports TSTM WND GST, reports TORNADO, reports WATER SPOUT, reports MARINE TSTM WIND, reports DEBRIS FLOW, reports NON-TSTM WND GST
 // issues Summary Local Storm Report
+// TODO don't flood the user with speaktext on first load
+// TODO stop checking for matches and use track.element
 var tracks = [];
-
-
+var currentPosition;
 var trackcallback = function(data) {
 	$('#menu').empty().hide();
 	
@@ -56,6 +58,10 @@ var trackcallback = function(data) {
 	if (data.info.type == 'iem') {
 		var track = new Track(data.info.name, data.info.url, data.info.type, 3);
 	}
+	
+	if (data.info.type == 'spcmeso') {
+		var track = new Track(data.info.name, data.info.url, data.info.type, 3);
+	}
 };
 	
 // Update clock
@@ -63,9 +69,8 @@ setInterval(function() { _setClock() }, 1000 );
 _setClock();
 function _setClock() {
 	$('#clock').text(moment.utc(new Date()).utc().format('HH:mm') + 'Z');
-	var now = new Date();
 	$.each(tracks, function() {
-		var updated = formatLastSuccess(now);
+		var updated = formatLastUpdate(this.lastUpdate);
 		var trackId = this.id;
 		$('#tracks li').each(function() {
 			if ($(this).data('trackId') == trackId) {
@@ -128,29 +133,56 @@ $('#addTrack').click(function() {
 $('#config').click(function() { });
 
 // TODO prevent dupe tracks
+// TODO maybe refactor all these init functions?
 function initIemTrack(track) {
 	var maxWidth = $('#display').width() - 20;
 	var maxHeight = $('#display').height() - 20;
-	$('#display').append(
-		$('<div/>', { 'class': 'track', 'id': 'displayIem' })
+	var trackdiv = $('<div/>', { 'class': 'track', 'id': 'displayIem' })
 			.data('trackId', track.url.hashCode())
 			.css('max-width', maxWidth)
 			.css('max-height', maxHeight)
-			.append($('<ol/>'))
-	);
+			.append($('<ol/>'));
+	$('#display').append(trackdiv);
+	track.element = trackdiv;
 	getIemMessages(track);
 }
 
 function initSatTrack(track) {
 	var maxWidth = $('#display').width() - 20;
 	var maxHeight = $('#display').height() - 20;
-	$('#display').append(
-		$('<div/>', { 'class': 'track' })
+	var trackdiv = $('<div/>', { 'class': 'track' })
+			.data('trackId', track.url.hashCode())
+			.css('max-width', maxWidth)
+			.css('max-height', maxHeight);
+	$('#display').append(trackdiv);
+	track.element = trackdiv;
+	updateSatTrack(track);
+}
+
+function initSpcMesoTrack(track) {
+	var getSector;
+	var splitUrl = track.url.split('/');
+	var maxWidth = $('#display').width() - 20;
+	var maxHeight = $('#display').height() - 20;
+	var sector = (splitUrl.length == 8) ? splitUrl[5] : null;
+	var trackdiv = $('<div/>', { 'class': 'track' })
 			.data('trackId', track.url.hashCode())
 			.css('max-width', maxWidth)
 			.css('max-height', maxHeight)
-	);
-	updateSatTrack(track);
+			.css('background', '#FFF')
+			.css('position', 'relative')
+			.data('sector', sector)
+			.append($('<div/>', { 'class': 'spcLocation' }));
+	track.element = trackdiv;
+	if (sector != null) {
+		trackdiv.append(
+			$('<img/>', { 'class': 'static', 'src': 'http://www.spc.noaa.gov/exper/mesoanalysis/' + sector + '/cnty/cnty.gif' })
+				.css('position', 'absolute')
+		);
+	}
+	$('#display').append(trackdiv);
+	updateSpcMesoTrack(track);
+	updateSpcTracksPosition(sector);
 }
 
 function processImage(img, track) {
@@ -188,6 +220,26 @@ function processImage(img, track) {
 	displayTrack.find('img').last().show();
 }
 
+function updateSpcMesoTrack(track) {
+	var url = track.Url;
+	var box = null;
+	$('#display .track').each(function() {
+		if ($(this).data('trackId') == track.id) {
+			box = $(this);
+			return false;
+		}
+	});
+	
+	if (box == null) { return false; }
+	var image = box.find('img:not(".static")');
+	if (!image.length) {
+		image = $('<img/>', {'class': 'shadow'}).css('position', 'absolute');
+		box.append(image);
+	}
+	var ticks = new Date().getTime();
+	image[0].src = track.url + '?' + ticks;
+}
+
 function updateSatTrack(track) {
 	var url = track.Url;
 	var box = null;
@@ -218,7 +270,9 @@ var Track = function()
 		this.id = url.hashCode();
 		this.lastHash = null;
 		this.UpdateMinutes = updateMinutes;
-		this.lastSuccess = null;
+		this.lastUpdate = null;
+		this.type = type;
+		this.element = null;
 		
 		// Add track to control list
 		$('#tracks li').removeClass('selected');
@@ -254,6 +308,10 @@ var Track = function()
 				setInterval(function() { updateSatTrack(track) }, updateMinutes * 60000);
 				initSatTrack(track);
 				break;
+			case 'spcmeso':
+				setInterval(function() { updateSpcMesoTrack(track) }, updateMinutes * 60000);
+				initSpcMesoTrack(track);
+				break;
 		}
     };
 
@@ -264,7 +322,7 @@ var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
 var speakerQueue = [];
 
-function formatLastSuccess(ts) {
+function formatLastUpdate(ts) {
 	var diff = new Date() - ts;
 	if (diff < 60000) { return '< 1min'; }
 	if (diff >= 60000 && diff < 300000) { return '< 5min'; }
@@ -358,9 +416,38 @@ function getIemMessages(track) {
 			}
 		}
 		
-		track.lastSuccess = new Date();
+		track.lastUpdate = new Date();
 	});
 }
+
+function setCurrentPosition(position) {
+	currentPosition = [position.coords.latitude, position.coords.longitude];
+}
+
+// TODO Ugh, updating sector mapping every time is annoying (but easy)
+function updateSpcTracksPosition() {
+	$.each(tracks, function() {
+		if (this.type != 'spcmeso' || this.element == null) { return; }
+		
+		setMap(this.element.data('sector').replace('s', ''));
+		var xy = lalo_xy(currentPosition[0], currentPosition[1]);
+		var xsys = xy_pix(xy[0], xy[1]);
+		// TODO this is nasty, the 4 is half the width of the marker, the 10 is the padding of the track div
+		this.element.find('.spcLocation')
+			.css('top', xsys[1] - 4 + 10)
+			.css('left', xsys[0] - 4 + 10)
+			.show();
+	});
+}
+
+var spcPositionTimer = setInterval(function() { updateSpcTracksPosition(); }, 60000);
+
+// TODO error handling
+// TODO config for accuracy
+// TODO test while moving
+$(document).ready(function() {
+	navigator.geolocation.watchPosition(setCurrentPosition, null, { enableHighAccuracy: true });
+});
 </script>
 </body>
 </html>

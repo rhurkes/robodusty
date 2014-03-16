@@ -3,6 +3,106 @@ var trackconfig =
 	'menu': [
 		{ id: 'IEM', info: { type: 'iem', name: 'IEM Messages', 'url': 'http://mesonet.agron.iastate.edu/projects/iembot/' } },
 		{
+			id: 'SPC Mesoanalysis',
+			children: [
+				{
+					id: 'National',
+					children: [
+						{ id: 'TTD', info: { type: 'spcmeso', name: 'SPC Temp/Td/Wind', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/ttd/ttd.gif' } },
+						{ id: '500mb', info: { type: 'spcmeso', name: 'SPC 500mb', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/500mb/500mb.gif' } },
+						{ id: '700mb', info: { type: 'spcmeso', name: 'SPC 700mb', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/700mb/700mb.gif' } },
+						{ id: '850mb', info: { type: 'spcmeso', name: 'SPC 850mb', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/850mb/850mb.gif' } },
+						{ id: 'VTM', info: { type: 'spcmeso', name: 'SPC VTM', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/vtm/vtm.gif' } },
+						{ id: 'MLCP', info: { type: 'spcmeso', name: 'SPC MLCAPE', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/mlcp/mlcp.gif' } },
+						{ id: 'NCAP', info: { type: 'spcmeso', name: 'SPC NCAPE', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/ncap/ncap.gif' } },
+						{ id: 'lllr/lllr', info: { type: 'spcmeso', name: 'SPC lllr/lllr', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/lllr/lllr/lllr/lllr.gif' } },
+						{ id: 'ESHR', info: { type: 'spcmeso', name: 'SPC Eff Shear', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/eshr/eshr.gif' } },
+						{ id: 'EFFH', info: { type: 'spcmeso', name: 'SPC Eff SRH', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/effh/effh.gif' } },
+						{ id: 'SCP', info: { type: 'spcmeso', name: 'SPC SCP', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/scp/scp.gif' } },
+						{ id: 'STPC', info: { type: 'spcmeso', name: 'SPC Eff STP', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/stpc/stpc.gif' } },
+						{ id: 'VGP3', info: { type: 'spcmeso', name: 'SPC VGP', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/vgp3/vgp3.gif' } },
+						{ id: 'LR3C', info: { type: 'spcmeso', name: 'SPC LR3C', sector: 19, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s19/lr3c/lr3c.gif' } }
+					]
+				},
+				{
+					id: 'NPlains',
+					children: [
+						{ id: 'TTD', info: { type: 'spcmeso', name: 'SPC TTD', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/ttd/ttd.gif' } },
+						{ id: '500mb', info: { type: 'spcmeso', name: 'SPC 500mb', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/500mb/500mb.gif' } },
+						{ id: '700mb', info: { type: 'spcmeso', name: 'SPC 700mb', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/700mb/700mb.gif' } },
+						{ id: '850mb', info: { type: 'spcmeso', name: 'SPC 850mb', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/850mb/850mb.gif' } },
+						{ id: 'VTM', info: { type: 'spcmeso', name: 'SPC VTM', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/vtm/vtm.gif' } },
+						{ id: 'MLCP', info: { type: 'spcmeso', name: 'SPC MLCAPE', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/mlcp/mlcp.gif' } },
+						{ id: 'NCAP', info: { type: 'spcmeso', name: 'SPC NCAPE', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/ncap/ncap.gif' } },
+						{ id: 'lllr/lllr', info: { type: 'spcmeso', name: 'SPC lllr/lllr', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/lllr/lllr/lllr/lllr.gif' } },
+						{ id: 'ESHR', info: { type: 'spcmeso', name: 'SPC Eff Shear', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/eshr/eshr.gif' } },
+						{ id: 'EFFH', info: { type: 'spcmeso', name: 'SPC Eff SRH', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/effh/effh.gif' } },
+						{ id: 'SCP', info: { type: 'spcmeso', name: 'SPC SCP', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/scp/scp.gif' } },
+						{ id: 'STPC', info: { type: 'spcmeso', name: 'SPC Eff STP', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/stpc/stpc.gif' } },
+						{ id: 'VGP3', info: { type: 'spcmeso', name: 'SPC VGP', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/vgp3/vgp3.gif' } },
+						{ id: 'LR3C', info: { type: 'spcmeso', name: 'SPC LR3C', sector: 13, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s13/lr3c/lr3c.gif' } }
+					]
+				},
+				{
+					id: 'CPlains',
+					children: [
+						{ id: 'TTD', info: { type: 'spcmeso', name: 'SPC TTD', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/ttd/ttd.gif' } },
+						{ id: '500mb', info: { type: 'spcmeso', name: 'SPC 500mb', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/500mb/500mb.gif' } },
+						{ id: '700mb', info: { type: 'spcmeso', name: 'SPC 700mb', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/700mb/700mb.gif' } },
+						{ id: '850mb', info: { type: 'spcmeso', name: 'SPC 850mb', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/850mb/850mb.gif' } },
+						{ id: 'VTM', info: { type: 'spcmeso', name: 'SPC VTM', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/vtm/vtm.gif' } },
+						{ id: 'MLCP', info: { type: 'spcmeso', name: 'SPC MLCAPE', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/mlcp/mlcp.gif' } },
+						{ id: 'NCAP', info: { type: 'spcmeso', name: 'SPC NCAPE', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/ncap/ncap.gif' } },
+						{ id: 'lllr/lllr', info: { type: 'spcmeso', name: 'SPC lllr/lllr', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/lllr/lllr/lllr/lllr.gif' } },
+						{ id: 'ESHR', info: { type: 'spcmeso', name: 'SPC Eff Shear', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/eshr/eshr.gif' } },
+						{ id: 'EFFH', info: { type: 'spcmeso', name: 'SPC Eff SRH', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/effh/effh.gif' } },
+						{ id: 'SCP', info: { type: 'spcmeso', name: 'SPC SCP', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/scp/scp.gif' } },
+						{ id: 'STPC', info: { type: 'spcmeso', name: 'SPC Eff STP', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/stpc/stpc.gif' } },
+						{ id: 'VGP3', info: { type: 'spcmeso', name: 'SPC VGP', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/vgp3/vgp3.gif' } },
+						{ id: 'LR3C', info: { type: 'spcmeso', name: 'SPC LR3C', sector: 14, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s14/lr3c/lr3c.gif' } }
+					]
+				},
+				{
+					id: 'SPlains',
+					children: [
+						{ id: 'TTD', info: { type: 'spcmeso', name: 'SPC TTD', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/ttd/ttd.gif' } },
+						{ id: '500mb', info: { type: 'spcmeso', name: 'SPC 500mb', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/500mb/500mb.gif' } },
+						{ id: '700mb', info: { type: 'spcmeso', name: 'SPC 700mb', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/700mb/700mb.gif' } },
+						{ id: '850mb', info: { type: 'spcmeso', name: 'SPC 850mb', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/850mb/850mb.gif' } },
+						{ id: 'VTM', info: { type: 'spcmeso', name: 'SPC VTM', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/vtm/vtm.gif' } },
+						{ id: 'MLCP', info: { type: 'spcmeso', name: 'SPC MLCAPE', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/mlcp/mlcp.gif' } },
+						{ id: 'NCAP', info: { type: 'spcmeso', name: 'SPC NCAPE', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/ncap/ncap.gif' } },
+						{ id: 'lllr/lllr', info: { type: 'spcmeso', name: 'SPC lllr/lllr', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/lllr/lllr/lllr/lllr.gif' } },
+						{ id: 'ESHR', info: { type: 'spcmeso', name: 'SPC Eff Shear', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/eshr/eshr.gif' } },
+						{ id: 'EFFH', info: { type: 'spcmeso', name: 'SPC Eff SRH', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/effh/effh.gif' } },
+						{ id: 'SCP', info: { type: 'spcmeso', name: 'SPC SCP', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/scp/scp.gif' } },
+						{ id: 'STPC', info: { type: 'spcmeso', name: 'SPC Eff STP', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/stpc/stpc.gif' } },
+						{ id: 'VGP3', info: { type: 'spcmeso', name: 'SPC VGP', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/vgp3/vgp3.gif' } },
+						{ id: 'LR3C', info: { type: 'spcmeso', name: 'SPC LR3C', sector: 15, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s15/lr3c/lr3c.gif' } }
+					]
+				},
+				{
+					id: 'Midwest',
+					children: [
+						{ id: 'TTD', info: { type: 'spcmeso', name: 'SPC TTD', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/ttd/ttd.gif' } },
+						{ id: '500mb', info: { type: 'spcmeso', name: 'SPC 500mb', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/500mb/500mb.gif' } },
+						{ id: '700mb', info: { type: 'spcmeso', name: 'SPC 700mb', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/700mb/700mb.gif' } },
+						{ id: '850mb', info: { type: 'spcmeso', name: 'SPC 850mb', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/850mb/850mb.gif' } },
+						{ id: 'VTM', info: { type: 'spcmeso', name: 'SPC VTM', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/vtm/vtm.gif' } },
+						{ id: 'MLCP', info: { type: 'spcmeso', name: 'SPC MLCAPE', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/mlcp/mlcp.gif' } },
+						{ id: 'NCAP', info: { type: 'spcmeso', name: 'SPC NCAPE', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/ncap/ncap.gif' } },
+						{ id: 'lllr/lllr', info: { type: 'spcmeso', name: 'SPC lllr/lllr', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/lllr/lllr/lllr/lllr.gif' } },
+						{ id: 'ESHR', info: { type: 'spcmeso', name: 'SPC Eff Shear', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/eshr/eshr.gif' } },
+						{ id: 'EFFH', info: { type: 'spcmeso', name: 'SPC Eff SRH', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/effh/effh.gif' } },
+						{ id: 'SCP', info: { type: 'spcmeso', name: 'SPC SCP', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/scp/scp.gif' } },
+						{ id: 'STPC', info: { type: 'spcmeso', name: 'SPC Eff STP', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/stpc/stpc.gif' } },
+						{ id: 'VGP3', info: { type: 'spcmeso', name: 'SPC VGP', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/vgp3/vgp3.gif' } },
+						{ id: 'LR3C', info: { type: 'spcmeso', name: 'SPC LR3C', sector: 20, url: 'http://www.spc.noaa.gov/exper/mesoanalysis/s20/lr3c/lr3c.gif' } }
+					]
+				}
+			]
+		},
+		{
 			id: 'CoD Satellite',
 			children: [
 				{	

@@ -51,7 +51,7 @@ canvas { display: none; }
 }
 li.track {
 	list-style: none;
-	background: #126180;
+	background: #2C3539;
 	height: 35px;
 	/*line-height: 35px;*/
 	margin: 5px;
@@ -60,7 +60,7 @@ li.track {
 	position: relative;
 }
 li.track.selected {
-	/*border: 2px solid gray;*/
+	background: #126180;
 }
 li.track .arrow {
 	position: absolute;
@@ -151,4 +151,14 @@ li .name {
 #displayIem span.iemMessage {
 	position: relative;
 	left: 10px;
+}
+
+.spcLocation {
+	width: 8px;
+	height: 8px;
+	background: #000;
+	position: absolute;
+	border-radius: 4px;
+	display: none;
+	z-index: 1;
 }
