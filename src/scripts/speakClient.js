@@ -6,6 +6,8 @@ try {
 }
 
 function speak(text, args) {
+  if (speakWorker === undefined) { return false; }
+  
   var PROFILE = 0;
 
   function parseWav(wav) {
