@@ -4,7 +4,7 @@
 // TODO add delay pattern to windowresize method
 // TODO refactor buttons and allow for selected buttons in left menu everywhere
 // TODO truncate COD images when there are more than X?
-// TODO check timers for deleted tracks, make sure everything is cleaned up
+// TODO if remove selected track, select another track
 var Dusty = Dusty || {};
 var removeMode = false;
 var tracks = [];
@@ -141,9 +141,11 @@ function initSatTrack(track) {
 function initSpcMesoTrack(track) {
 	var getSector;
 	var splitUrl = track.url.split('/');
+	console.log(splitUrl);
 	var maxWidth = $('#display').width() - 20;
 	var maxHeight = $('#display').height() - 20;
 	var sector = (splitUrl.length == 8) ? splitUrl[5] : null;
+	console.log(sector);
 	var trackdiv = $('<div/>', { 'class': 'track' })
 			.data('trackId', track.url.hashCode())
 			.css('max-width', maxWidth)
@@ -212,6 +214,24 @@ function updateSatTrack(track) {
 	track.element.append(img);
 }
 
+function loopImages(track, delay) {
+	// TODO need to finish
+	var loop = {};
+	delay = delay || 1000;
+	loop.images = track.element.find('img');
+	loop.lastIndex = 0;
+	loop.timer = setInterval(function() {
+		loop.images.hide();
+		$(loop.images.get(loop.lastIndex)).show();
+		if (loop.lastIndex < (loop.images.length - 1)) {
+			loop.lastIndex++;
+		}
+		else {
+			loop.lastIndex = 0;
+		}
+	}, delay);
+}
+
 var Track = function()
 {
     var constructor = function Track(name, url, type, updateMinutes) {
@@ -225,19 +245,20 @@ var Track = function()
 		this.lastUpdate = null;
 		this.type = type;
 		this.element = null;
+		this.timer = null;	// Timer associated with track, makes it easy to cancel if track is removed
 		
 		// Initialize tracks
 		switch (type) {
 			case 'iem':
-				var iemTimer = setInterval(function() { getIemMessages(track); }, 30000);
+				track.timer = setInterval(function() { getIemMessages(track); }, 30000);
 				initIemTrack(track);
 				break;
 			case 'codsat':
-				setInterval(function() { updateSatTrack(track) }, updateMinutes * 60000);
+				track.timer = setInterval(function() { updateSatTrack(track) }, updateMinutes * 60000);
 				initSatTrack(track);
 				break;
 			case 'spcmeso':
-				setInterval(function() { updateSpcMesoTrack(track) }, updateMinutes * 60000);
+				track.timer = setInterval(function() { updateSpcMesoTrack(track) }, updateMinutes * 60000);
 				initSpcMesoTrack(track);
 				break;
 		}
@@ -266,6 +287,7 @@ var Track = function()
 						$('#overlay').hide();
 						removeMode = false;
 						$('#removeTrack').text('Remove track');
+						clearInterval(track.timer);
 					}
 				})
 		);
@@ -326,15 +348,14 @@ function getIemMessages(track) {
 		
 		$.each(data.messages, function() {
 			var tmpMessage = $(this)[0];
-			if (tmpMessage.product_id.length > 0) {
-				var tmpProductData = tmpMessage.product_id.split('-');
-				if (tmpProductData[3] !== null && tmpProductData[3].length >= 3) { tmpCode = tmpProductData[3].substring(0, 3); }
-				if (tmpProductData[1] === 'KWNS') { tmpCode += '|SPC'; }
-				if (_isFilteredType(tmpCode)) { return; }
-				if (_isFilteredLsr(tmpMessage.message)) { return; }
-				//if ((tmpCode == 'AFD' || tmpCode == 'NOW' || tmpCode == 'LSR') && !_isAllowedWfo(tmpProductData[1])) { return; }
-				if ((tmpCode == 'WCN' || tmpCode == 'SVS') && (tmpMessage.message.indexOf('cancels') > -1 || tmpMessage.message.indexOf('continues'))) { return; }
-			}
+			if (tmpMessage == null || tmpMessage.product_id == null || !tmpMessage.product_id.length) { return false; }
+			var tmpProductData = tmpMessage.product_id.split('-');
+			if (tmpProductData[3] !== null && tmpProductData[3].length >= 3) { tmpCode = tmpProductData[3].substring(0, 3); }
+			if (tmpProductData[1] === 'KWNS') { tmpCode += '|SPC'; }
+			if (_isFilteredType(tmpCode)) { return; }
+			if (_isFilteredLsr(tmpMessage.message)) { return; }
+			//if ((tmpCode == 'AFD' || tmpCode == 'NOW' || tmpCode == 'LSR') && !_isAllowedWfo(tmpProductData[1])) { return; }
+			if ((tmpCode == 'WCN' || tmpCode == 'SVS') && (tmpMessage.message.indexOf('cancels') > -1 || tmpMessage.message.indexOf('continues'))) { return; }
 			
 			// Speaker Queue stuff testing
 			// Parse abbreviations
