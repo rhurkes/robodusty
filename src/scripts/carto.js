@@ -1,7 +1,17 @@
-var cart = new Array();
+// Borrowed some math from SPC's carto.js
+
+var cart = {};
 var rad = 0.01745;
-var pi  = 3.1416;
+var pi = 3.1416;
 var RRR = 6371;
+
+// For whatever reason, the initmap won't work with scaled images, so we'll do it this way
+function scalePosition(imgWidth, xsys) {
+	// Assume a scale that preserves ratio
+	var ratio = imgWidth / 1000;
+		
+	return [xsys[0] * ratio, xsys[1] * ratio];
+}
 
 function initmap(clat, clon, slat1, slat2, slon, zoom, hgt, wid, meshsize) {
 	var xyvals = new Array();
@@ -14,10 +24,10 @@ function initmap(clat, clon, slat1, slat2, slon, zoom, hgt, wid, meshsize) {
 	cart['clat'] = clat;
 	cart['clon'] = clon;
 	cart['gridsize'] = meshsize;
-	cart['xshift']   = 0;
-	cart['yshift']   = 0;
-	cart['scrnwid']  = wid;
-	cart['scrnlen']  = hgt;
+	cart['xshift'] = 0;
+	cart['yshift'] = 0;
+	cart['scrnwid'] = wid;
+	cart['scrnlen'] = hgt;
 	cart['xscle'] = zoom;
 	cart['yscle'] = zoom;
 	xyvals = lalo_xy(clat, clon);
@@ -38,55 +48,11 @@ function lalo_xy(lat, lon) {
 	return Array(x, y);
 }
 
-function xy_lalo(x, y) {
-	var term1 = RRR * Math.cos(d2r(cart['reflat1']));
-	var rho1  = term1 / cart['coneconst'];
-	var term2 = Math.pow(Math.tan(d2r(45.0 - cart['reflat1'] / 2.0)), cart['coneconst']);
-	var psi   = term1 / (cart['coneconst'] * term2);
-	var n1    = (x / (1.0 / cart['gridsize']));
-	var d1    = (rho1 - (y / (1.0 / cart['gridsize'])));
-	var theta = Math.atan(n1/d1);
-	var lon   = cart['reflon'] + (1.0 / cart['coneconst']) * r2d(theta);
-	
-	if ((theta != 0) && (theta < pi)) {
-		if (x > 0) { var nume = Math.pow(x,  (1.0 / cart['coneconst'])); }
-		else { var nume = Math.pow(-x, (1.0 / cart['coneconst'])); }
-
-		if (theta > 0) { var denominator = Math.pow(1.0 / cart['gridsize'] * psi * Math.sin(theta),  (1.0 / cart['coneconst'])); }
-		else { var denominator = Math.pow(1.0 / cart['gridsize'] * psi * Math.sin(-theta), (1.0 / cart['coneconst'])); }
-		var lat = 90.0 - 2.0 * r2d(Math.atan(nume/denominator));
-	}
-	else {
-		var maxv = (y - (1.0 / cart['gridsize']) * rho1);
-		if (maxv < 0) maxv = -maxv;
-		var term3 = Math.pow(maxv, (1.0 / cart['coneconst']));
-		var term4 = Math.pow(psi * (1.0 / cart['gridsize']), (1.0 / cart['coneconst']));
-		var lat = 90.0 - 2.0 * r2d(Math.atan(term3/term4));
-	}
-	if ((lat == 90.0) || (lat == -90.0)) { lon = 0; };
-	
-	return Array(lat, lon);
-}
-
-function pix_xy(xs, ys) {
-	var x = ((((xs - cart['xshift']) - (cart['scrnwid'] / 2)) / cart['xscle']) + cart['xxl']);
-	var y = ((((-ys + cart['yshift']) + (cart['scrnlen'] / 2)) / cart['yscle']) + cart['yyl']);
-	
-	return Array(x, y);
-}
-
 function xy_pix(x, y) {
-	var xs = (x - cart['xxl']) * cart['xscle'] + (cart['scrnwid'] / 2) + cart['xshift'];
-	var ys = (y - cart['yyl']) * cart['yscle'] - (cart['scrnlen'] / 2) - cart['yshift'];
+	var xs = ((((x - cart['xxl']) * cart['xscle'])) + (cart['scrnwid'] / 2)) + cart['xshift'];
+	var ys = ((((y - cart['yyl']) * cart['yscle'])) - (cart['scrnlen'] / 2)) - cart['yshift'];
 	
 	return Array(xs, -ys);
-}
-
-function pix_lalo(xs, ys) {
-	xyvals = pix_xy(xs,ys);
-	lalovals = xy_lalo(xyvals[0], xyvals[1]);
-	
-	return Array(lalovals[0], lalovals[1]);
 }
 
 function d2r(val) {
@@ -96,10 +62,6 @@ function d2r(val) {
 function r2d(val) {
 	return val / rad;
 }
-
-// #####################################################
-// # MESOANALYSIS SPECIFIC CODE
-// #####################################################
 
 function setMap(sectornum) {
 	if (sectornum == 11) { initmap(44.60, -114.05, 20, 60, -100, 21.4, 750, 1000, 40); }
@@ -113,16 +75,3 @@ function setMap(sectornum) {
 	if (sectornum == 19) { initmap(38.15, -96.80, 20, 60, -100, 8.9, 750, 1000, 40); }
 	if (sectornum == 20) { initmap(39.2, -91.75, 20, 60, -100, 23.15, 750, 1000, 40); }
 }
-
-function getClimoEnv(lat, lon) {
-$.ajax({
-	url: '/exper/mesoanalysis/new/getclimoenv.php?lat='+lat+'&lon='+lon+'&src='+ window.mdlSource + '&' + new Date().getTime(),
-	success: function(data) {
-		var pdata = data.split("#$#$#");
-		$("#climo1").html(pdata[1]);
-		$("#climo2").html(pdata[2]);
-		$("#envs").html(pdata[3]);
-		}
-	});
-}
-

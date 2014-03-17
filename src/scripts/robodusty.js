@@ -138,34 +138,6 @@ function initSatTrack(track) {
 	updateSatTrack(track);
 }
 
-function initSpcMesoTrack(track) {
-	var getSector;
-	var splitUrl = track.url.split('/');
-	console.log(splitUrl);
-	var maxWidth = $('#display').width() - 20;
-	var maxHeight = $('#display').height() - 20;
-	var sector = (splitUrl.length == 8) ? splitUrl[5] : null;
-	console.log(sector);
-	var trackdiv = $('<div/>', { 'class': 'track' })
-			.data('trackId', track.url.hashCode())
-			.css('max-width', maxWidth)
-			.css('max-height', maxHeight)
-			.css('background', '#FFF')
-			.css('position', 'relative')
-			.data('sector', sector)
-			.append($('<div/>', { 'class': 'spcLocation' }));
-	track.element = trackdiv;
-	if (sector != null) {
-		trackdiv.append(
-			$('<img/>', { 'class': 'static', 'src': 'http://www.spc.noaa.gov/exper/mesoanalysis/' + sector + '/cnty/cnty.gif' })
-				.css('position', 'absolute')
-		);
-	}
-	$('#display').append(trackdiv);
-	updateSpcMesoTrack(track);
-	updateSpcTracksPosition(sector);
-}
-
 function processImage(img, track) {
 	$(canvas).attr('width', img.naturalWidth).attr('height', img.naturalHeight);
 	context.drawImage(img, 0, 0);
@@ -193,6 +165,37 @@ function processImage(img, track) {
 	track.element.find('img').last().show();
 }
 
+function initSpcMesoTrack(track) {
+	var getSector;
+	var splitUrl = track.url.split('/');
+	console.log(splitUrl);
+	var maxWidth = $('#display').width() - 20;
+	var maxHeight = $('#display').height() - 20;
+	track.sector = (splitUrl.length == 8) ? splitUrl[5] : null;
+	var trackdiv = $('<div/>', { 'class': 'track' })
+			.data('trackId', track.url.hashCode())
+			.css('max-width', maxWidth)
+			.css('max-height', maxHeight)
+			.css('background', '#FFF')
+			.css('position', 'relative')
+			.append($('<div/>', { 'class': 'spcLocation' }));
+	track.element = trackdiv;
+	if (track.sector != null) {
+		trackdiv.append(
+			$('<img/>', { 'class': 'static', 'src': 'http://www.spc.noaa.gov/exper/mesoanalysis/' + track.sector + '/cnty/cnty.gif' })
+				.css('position', 'absolute')
+				.load(function(el) {
+					console.log(track);
+					track.imgHeight = el.target.height;
+					track.imgWidth = el.target.width;
+					updateSpcTracksPosition(track.sector, track.imgHeight, track.imgWidth);
+				})
+		);
+	}
+	$('#display').append(trackdiv);
+	updateSpcMesoTrack(track);
+}
+
 function updateSpcMesoTrack(track) {
 	var image = track.element.find('img:not(".static")');
 	if (!image.length) {
@@ -202,6 +205,24 @@ function updateSpcMesoTrack(track) {
 	var ticks = new Date().getTime();
 	image[0].src = track.url + '?' + ticks;
 	resizeDisplay();
+}
+
+function updateSpcTracksPosition() {
+	if (currentPosition == null) { return; }
+	$.each(tracks, function() {
+		if (this.type != 'spcmeso' || this.element == null) { return; }
+		
+		var sector = this.sector.replace('s', '');
+		setMap(sector);
+		var xy = lalo_xy(currentPosition[0], currentPosition[1]);
+		var xsys = xy_pix(xy[0], xy[1]);
+		xsys = scalePosition(this.imgWidth, xsys);
+		// TODO this is nasty, the 4 is half the width of the marker, the 10 is the padding of the track div
+		this.element.find('.spcLocation')
+			.css('top', xsys[1] - 4)
+			.css('left', xsys[0] - 4)
+			.show();
+	});
 }
 
 function updateSatTrack(track) {
@@ -247,6 +268,8 @@ var Track = function()
 		this.element = null;
 		this.timer = null;	// Timer associated with track, makes it easy to cancel if track is removed
 		
+		tracks.push(track);
+		
 		// Initialize tracks
 		switch (type) {
 			case 'iem':
@@ -291,8 +314,6 @@ var Track = function()
 					}
 				})
 		);
-
-		tracks.push(track);
     };
 
     return constructor;
@@ -310,6 +331,15 @@ function resizeDisplay() {
 	var displayHeight = $(window).height() - 20;
 	$('#display img').css('max-width', displayWidth + 10).css('max-height', displayHeight);
 	$('#display').width(displayWidth).height(displayHeight);
+	
+	// Update track sizes for SPC GPS position
+	$.each(tracks, function() {
+		if (this.type != 'spcmeso' || this.element == null) { return; }
+		this.imgHeight = this.element.find('img').get(0).height;
+		this.imgWidth = this.element.find('img').get(0).width;
+	});
+	
+	updateSpcTracksPosition();
 }
 $(window).resize(function() {
 	resizeDisplay();
@@ -398,27 +428,10 @@ function getIemMessages(track) {
 }
 
 function setCurrentPosition(position) {
+	// meow testing
+	//currentPosition = [36.9990, -109.0453];
 	currentPosition = [position.coords.latitude, position.coords.longitude];
 }
-
-// TODO Ugh, updating sector mapping every time is annoying (but easy)
-function updateSpcTracksPosition() {
-	if (currentPosition == null) { return; }
-	$.each(tracks, function() {
-		if (this.type != 'spcmeso' || this.element == null) { return; }
-		
-		setMap(this.element.data('sector').replace('s', ''));
-		var xy = lalo_xy(currentPosition[0], currentPosition[1]);
-		var xsys = xy_pix(xy[0], xy[1]);
-		// TODO this is nasty, the 4 is half the width of the marker, the 10 is the padding of the track div
-		this.element.find('.spcLocation')
-			.css('top', xsys[1] - 4 + 10)
-			.css('left', xsys[0] - 4 + 10)
-			.show();
-	});
-}
-
-var spcPositionTimer = setInterval(function() { updateSpcTracksPosition(); }, 60000);
 
 // TODO error handling
 // TODO config for accuracy
