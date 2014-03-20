@@ -12,6 +12,7 @@ var speakerQueue = [];
 var currentPosition;
 var canvas = $('#canvas');
 var context = canvas[0].getContext('2d');
+var googleMap = null;
 	
 var trackcallback = function(data) {
 	$('#menu').empty().hide();
@@ -25,6 +26,10 @@ var trackcallback = function(data) {
 	}
 	
 	if (data.info.type == 'spcmeso') {
+		var track = new Track(data.info.name, data.info.url, data.info.type, 3);
+	}
+	
+	if (data.info.type == 'chasergrid') {
 		var track = new Track(data.info.name, data.info.url, data.info.type, 3);
 	}
 };
@@ -235,6 +240,58 @@ function updateSatTrack(track) {
 	track.element.append(img);
 }
 
+function updateChaserGrid(track) {
+	$.get('http://capbreak.com/api/locations?groups=default', function(data) {
+		//debugger;
+		var markers = [];
+		for (var i = 0; i < data.length; i++) {
+			var marker = new google.maps.Marker({ position: new google.maps.LatLng(data[i].Latitude, data[i].Longitude), title: data[i].Name });
+			markers.push(marker);
+			marker.setMap(googleMap);
+		}
+	});
+}
+
+function initGoogleMaps() {
+	var ll = new google.maps.LatLng(currentPosition[0], currentPosition[1]);
+	var mapOptions = {
+		zoom: 8,
+		center: ll
+	}
+	googleMap = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+	var image = {
+		url: 'images/crosshair.png',
+		size: new google.maps.Size(32, 32),
+		origin: new google.maps.Point(0, 0),
+		anchor: new google.maps.Point(16, 16)
+	};
+	var marker = new google.maps.Marker({position: ll, title: 'Current Position', icon: image});
+	marker.setMap(googleMap);
+}
+
+function loadGoogleMaps() {
+	var script = document.createElement('script');
+	script.type = 'text/javascript';
+	script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyAz6f68Ef09XUxhaXjl9uhSxP4YKZYGZWs&sensor=true&callback=initGoogleMaps';
+	document.body.appendChild(script);
+}
+
+function initChaserGridTrack(track) {
+	var apiKey = 'AIzaSyAz6f68Ef09XUxhaXjl9uhSxP4YKZYGZWs'
+	var maxWidth = $('#display').width() - 20;
+	var maxHeight = $('#display').height() - 20;
+	var trackdiv = $('<div/>', { 'class': 'track', 'id': 'displayChaserGrid' })
+			.css('width', maxWidth)
+			.css('height', maxHeight)
+			.append($('<div/>', { id: 'map-canvas', style: 'height:100%;' }));
+	$('#display').append(trackdiv);
+	loadGoogleMaps();
+	track.timer = setInterval(function() { updateChaserGrid(); }, 120000);
+	updateChaserGrid();
+	
+	track.element = trackdiv;
+}
+
 function loopImages(track, delay) {
 	// TODO need to finish
 	var loop = {};
@@ -283,6 +340,10 @@ var Track = function()
 			case 'spcmeso':
 				track.timer = setInterval(function() { updateSpcMesoTrack(track) }, updateMinutes * 60000);
 				initSpcMesoTrack(track);
+				break;
+			case 'chasergrid':
+				track.timer = setInterval(function() { updateChaserGrid(track) }, updateMinutes * 60000);
+				initChaserGridTrack(track);
 				break;
 		}
 		
@@ -428,13 +489,31 @@ function getIemMessages(track) {
 }
 
 function setCurrentPosition(position) {
-	// meow testing
-	//currentPosition = [36.9990, -109.0453];
 	currentPosition = [position.coords.latitude, position.coords.longitude];
+	
+	if (sendLocationTimer == undefined) {
+		var sendLocationTimer = setInterval(function() { sendLocation(); }, 120000);
+		sendLocation();
+	}
+}
+
+var currentName = 'Anonymous';
+
+function sendLocation() {
+	var request = {
+		'Groups': ['default'],
+		'User': {
+			'Name': currentName,
+			'Latitude': currentPosition[0],
+			'Longitude': currentPosition[1],
+		}
+	};
+	$.post('http://capbreak.com/api/locations', request);
 }
 
 // TODO error handling
 // TODO config for accuracy
 $(document).ready(function() {
+	currentName = prompt('Enter your name: ', '');	// This breaks geolocation if it happens after *shrug*
 	navigator.geolocation.watchPosition(setCurrentPosition, null, { enableHighAccuracy: true });
 });

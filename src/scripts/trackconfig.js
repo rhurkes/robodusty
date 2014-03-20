@@ -2,6 +2,7 @@ var trackconfig =
 {
 	'menu': [
 		{ id: 'IEM', info: { type: 'iem', name: 'IEM Messages', 'url': 'http://mesonet.agron.iastate.edu/projects/iembot/' } },
+		{ id: 'Chaser Grid', info: { type: 'chasergrid', name: 'Chaser Grid', url: 'http://maps.google.com' } },
 		{
 			id: 'SPC Mesoanalysis',
 			children: [
